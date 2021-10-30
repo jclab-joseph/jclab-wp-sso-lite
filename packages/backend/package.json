@@ -1,0 +1,57 @@
+{
+  "name": "@jclab-wp/sso-lite-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "serve:http": "nodemon --exec esr src/index.ts",
+    "serve:serverless": "serverless offline",
+    "build": "yarn build:webpack && yarn build:node_modules && yarn build:bundle_zip",
+    "build:webpack": "webpack",
+    "build:node_modules": "cd dist && yarn install --prod",
+    "build:bundle_zip": "del-cli -f bundle.zip && cd dist && bestzip ../bundle.zip *"
+  },
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jclab-joseph/jclab-wp-sso-lite.git"
+  },
+  "author": {
+    "name": "Joseph Lee",
+    "email": "joseph@jc-lab.net"
+  },
+  "dependencies": {
+    "@nestjs/common": "^8.1.2",
+    "@nestjs/core": "^8.1.1",
+    "@nestjs/platform-express": "^8.1.1",
+    "@nestjs/typeorm": "^8.0.2",
+    "@vendia/serverless-express": "^4.5.2",
+    "express": "^4.17.1",
+    "jose": "^4.1.1",
+    "mysql2": "^2.3.2",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.4.0",
+    "typeorm": "^0.2.38",
+    "uuid": "^8.3.2",
+    "wait-signal": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/uuid": "^8.3.1",
+    "aws-lambda": "^1.0.6",
+    "bestzip": "^2.2.0",
+    "copy-webpack-plugin": "^9.0.1",
+    "del-cli": "^4.0.1",
+    "http-proxy-middleware": "^2.0.1",
+    "rimraf": "^3.0.2",
+    "serverless": "^2.64.1",
+    "serverless-offline": "^8.2.0",
+    "serverless-plugin-typescript": "^2.1.0",
+    "ts-loader": "^9.2.6",
+    "tsc": "^2.0.3",
+    "typescript": "^4.4.4",
+    "webpack": "^5.59.1",
+    "webpack-cli": "^4.9.1",
+    "webpack-node-externals": "^3.0.0"
+  }
+}
