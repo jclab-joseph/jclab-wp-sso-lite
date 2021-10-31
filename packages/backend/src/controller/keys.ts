@@ -7,7 +7,7 @@ export class KeysController {
 
   }
 
-  @Get('/jwks.json')
+  @Get('/api/jwks.json')
   @Header('Content-Type', 'application/json; charset=utf-8')
   getJwksJson(): Promise<string> {
     return getPublicKeys();

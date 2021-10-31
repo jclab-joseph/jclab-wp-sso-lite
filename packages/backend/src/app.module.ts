@@ -1,7 +1,6 @@
 import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
 import {OrmFeatureModule, OrmRootModule} from './config';
 import {KeysController} from './controller/keys';
-import {AuthController} from './controller/auth';
 import {OauthController} from './controller/oauth';
 import {LoggerMiddleware} from './logger.middleware';
 import {UserAuthService} from './service/user_auth';
@@ -12,7 +11,7 @@ import {ProxyController} from './controller/proxy';
 @Module({
   imports: [OrmRootModule, OrmFeatureModule],
   providers: [AuthorizationCodeService, UserAuthService, ClientAuthService],
-  controllers: [KeysController, AuthController, OauthController, ProxyController]
+  controllers: [KeysController, OauthController, ProxyController]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): any {
