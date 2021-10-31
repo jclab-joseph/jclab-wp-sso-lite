@@ -1,7 +1,7 @@
 {
   "message": "hello i18n !!",
   "application": {
-    "vote_lite": {
+    "vote-lite": {
       "name": "Vote Lite"
     }
   }

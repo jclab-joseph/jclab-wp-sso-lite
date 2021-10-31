@@ -1,5 +1,6 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn} from 'typeorm';
+import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, OneToMany} from 'typeorm';
 import {Org} from './org';
+import {AccountAuthorization} from './account_authorization';
 
 @Entity({name: 'ot_acnt'})
 export class Account {
@@ -21,4 +22,9 @@ export class Account {
 
   @Column({name: 'email', type: 'varchar', length: 128})
   email: string;
+
+  @OneToMany(() => AccountAuthorization, (autz) => autz.account, {
+    lazy: true
+  })
+  authorizations: Promise<AccountAuthorization[]>;
 }

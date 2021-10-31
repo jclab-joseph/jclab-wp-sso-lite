@@ -1,24 +1,37 @@
 import {Injectable} from '@nestjs/common';
 import * as util from 'util';
-import {compactDecrypt, CompactEncrypt, importJWK, JWK, CompactDecryptGetKey} from 'jose'
+import {
+  KeyLike,
+  JWK,
+  compactDecrypt,
+  CompactEncrypt,
+  importJWK,
+  CompactDecryptGetKey,
+  FlattenedJWE,
+  JWEHeaderParameters
+} from 'jose'
 import {getEncryptionKey} from '../envs';
-import {LoginResult} from './auth';
-import {FlattenedJWE, JWEHeaderParameters, KeyLike} from 'jose/dist/types/types';
+import {LoginResult} from './user_auth';
 
 const encoder = new util.TextEncoder();
 const decoder = new util.TextDecoder();
 
 export interface AuthorizationCodeData {
-  requestId: string;
+  reqId: string;
   orgId: string;
   acntId: string;
   authId: string;
   time: number;
+  clientId: string;
+  scopes: string[];
 }
 
 const keySupplier: CompactDecryptGetKey = (protectedHeader: JWEHeaderParameters, token: FlattenedJWE): Promise<KeyLike | Uint8Array> => {
   return getEncryptionKey()
-    .then((encryptionKeyJson) => importJWK(encryptionKeyJson as JWK));
+    .then((encryptionKeyJson) => importJWK({
+      alg: 'dir',
+      ...encryptionKeyJson
+    } as JWK));
 }
 
 /**
@@ -29,13 +42,15 @@ const keySupplier: CompactDecryptGetKey = (protectedHeader: JWEHeaderParameters,
  */
 @Injectable()
 export class AuthorizationCodeService {
-  public encryptCode(loginResult: LoginResult): Promise<string> {
+  public encryptCode(reqId: string, clientId: string, loginResult: LoginResult): Promise<string> {
     const plainText: AuthorizationCodeData = {
-      requestId: loginResult.requestId,
+      reqId: reqId,
       orgId: loginResult.result && loginResult.orgId,
       acntId: loginResult.result && loginResult.acntId,
       authId: loginResult.result && loginResult.authId,
-      time: new Date().getTime()
+      scopes: loginResult.result && loginResult.scopes,
+      time: new Date().getTime(),
+      clientId: clientId
     };
     return getEncryptionKey()
       .then((encryptionKeyJson) => {
@@ -51,7 +66,7 @@ export class AuthorizationCodeService {
       })
   }
 
-  public decryptCode(code: string) {
+  public decryptCode(code: string): Promise<AuthorizationCodeData> {
     return compactDecrypt(code, keySupplier)
       .then((decryptResult) => {
         try {

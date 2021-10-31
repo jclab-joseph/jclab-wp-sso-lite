@@ -25,6 +25,7 @@ export interface LoginSuccResult {
   orgId: string;
   acntId: string;
   authId: string;
+  scopes: string[];
 }
 
 export type LoginResult = LoginSuccResult | LoginFailResult;
@@ -59,7 +60,7 @@ function verifyPassword(stored: string, input: string): Promise<boolean> {
 }
 
 @Injectable()
-export class AuthService {
+export class UserAuthService {
   constructor(
     @InjectRepository(OrgRepository) private readonly orgRepository: OrgRepository,
     @InjectRepository(OrgRootRepository) private readonly orgRootRepository: OrgRootRepository,
@@ -117,7 +118,7 @@ export class AuthService {
             result: false
           };
         }
-        return verifyPassword(row.password, password)
+        return row.account.authorizations.then((authorizations) => verifyPassword(row.password, password)
           .then((result) => {
             if (result) {
               this.loggingSucc(remoteInfo, row);
@@ -125,7 +126,8 @@ export class AuthService {
                 result: true,
                 orgId: row.account.org.orgId,
                 acntId: row.account.acntId,
-                authId: row.authId
+                authId: row.authId,
+                scopes: authorizations.map(v => v.scope)
               };
             } else {
               this.loggingWrongPassword(remoteInfo, row);
@@ -133,7 +135,8 @@ export class AuthService {
                 result: false
               };
             }
-          });
+          })
+        );
       });
   }
 }

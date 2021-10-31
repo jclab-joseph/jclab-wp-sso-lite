@@ -9,7 +9,9 @@
     "build": "yarn build:webpack && yarn build:node_modules && yarn build:bundle_zip",
     "build:webpack": "webpack",
     "build:node_modules": "cd dist && yarn install --prod",
-    "build:bundle_zip": "del-cli -f bundle.zip && cd dist && bestzip ../bundle.zip *"
+    "build:bundle_zip": "del-cli -f bundle.zip && cd dist && bestzip ../bundle.zip *",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint --fix src/**/*.ts"
   },
   "keywords": [],
   "repository": {

@@ -16,6 +16,10 @@ import {AuthenticationRepository} from './repository/authentication';
 import {OrgRootRepository} from './repository/org_root';
 import {LoginLogRepository} from './repository/login_log';
 import {LoginLog} from './entity/login_log';
+import {OAuthClientPublicKeyRepository} from './repository/oauth_client_public_key';
+import {OAuthClientPublicKey} from './entity/oauth_client_public_key';
+import {AccountAuthorization} from './entity/account_authorization';
+import {AccountAuthorizationRepository} from './repository/account_authorization';
 
 export const OrmRootModule = TypeOrmModule.forRoot({
   type: 'mariadb',
@@ -24,14 +28,17 @@ export const OrmRootModule = TypeOrmModule.forRoot({
   username: DB_USERNAME,
   password: DB_PASSWORD,
   database: DB_NAME,
+  timezone: 'Z',
   synchronize: true,
   logging: 'all',
   entities: [
     Org,
     Account,
     OrgRoot,
+    AccountAuthorization,
     Authentication,
-    LoginLog
+    LoginLog,
+    OAuthClientPublicKey
   ]
 });
 
@@ -39,6 +46,8 @@ export const OrmFeatureModule = TypeOrmModule.forFeature([
   OrgRepository,
   AccountRepository,
   OrgRootRepository,
+  AccountAuthorizationRepository,
   AuthenticationRepository,
-  LoginLogRepository
+  LoginLogRepository,
+  OAuthClientPublicKeyRepository
 ]);

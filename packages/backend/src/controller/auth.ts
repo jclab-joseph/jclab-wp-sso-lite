@@ -1,6 +1,5 @@
-import { SignJWT, JWK, importJWK } from 'jose';
-import {Controller, HttpException, HttpStatus, Logger, Post, Req, Body, Inject, Query} from '@nestjs/common';
-import {AuthService} from '../service/auth';
+import {Controller, Logger, Post, Req, Body, Inject, Query} from '@nestjs/common';
+import {UserAuthService} from '../service/user_auth';
 
 interface DeviceInfo {
   aud: string[];
@@ -17,20 +16,7 @@ interface LoginRequest {
 export class AuthController {
   private log: Logger;
 
-  constructor(@Inject(AuthService) public authService: AuthService) {
+  constructor(@Inject(UserAuthService) public userAuthService: UserAuthService) {
     this.log = new Logger(AuthController.name);
-  }
-
-  @Post('/api/login')
-  login(@Query('type') type: string, @Body() body: LoginRequest): Promise<string> {
-    if (type === 'plain') {
-      return this.authService.plainLogin(body.username, body.password)
-        .then((result) => {
-          console.log(result);
-          return JSON.stringify(result);
-        });
-    } else {
-      return Promise.resolve('NO');
-    }
   }
 }
