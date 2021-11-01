@@ -64,7 +64,7 @@ export default class Login extends Vue {
       });
   }
 
-  public get targetName (): string {
+  public get targetName () {
     return this.$t(`application.${this.target}.name`);
   }
 

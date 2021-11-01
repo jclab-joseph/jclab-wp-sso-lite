@@ -1,53 +1,109 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  DB_HOST,
-  DB_PORT,
-  DB_USERNAME,
-  DB_PASSWORD,
-  DB_NAME
-} from './envs';
-import {Org} from './entity/org';
-import {OrgRoot} from './entity/org_root';
-import {Account} from './entity/account';
-import {Authentication} from './entity/authentication';
-import {OrgRepository} from './repository/org';
-import {AccountRepository} from './repository/account';
-import {AuthenticationRepository} from './repository/authentication';
-import {OrgRootRepository} from './repository/org_root';
-import {LoginLogRepository} from './repository/login_log';
-import {LoginLog} from './entity/login_log';
-import {OAuthClientPublicKeyRepository} from './repository/oauth_client_public_key';
-import {OAuthClientPublicKey} from './entity/oauth_client_public_key';
-import {AccountAuthorization} from './entity/account_authorization';
-import {AccountAuthorizationRepository} from './repository/account_authorization';
+import util from 'util';
+import fs from 'fs';
+import WaitSignal from 'wait-signal';
+import {ConfigLoader} from './config_loaders/loader';
+import {AWSSecretsManagerConfigLoader} from './config_loaders/aws_sm';
 
-export const OrmRootModule = TypeOrmModule.forRoot({
-  type: 'mariadb',
-  host: DB_HOST,
-  port: DB_PORT,
-  username: DB_USERNAME,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  timezone: 'Z',
-  synchronize: true,
-  logging: 'all',
-  entities: [
-    Org,
-    Account,
-    OrgRoot,
-    AccountAuthorization,
-    Authentication,
-    LoginLog,
-    OAuthClientPublicKey
-  ]
-});
+export class ConfigManager {
+  private _loading: boolean = false;
+  private _loadSignal: WaitSignal<boolean> = new WaitSignal();
+  private _loaders: ConfigLoader[] = [];
+  private _envs: Record<string, string> = {};
 
-export const OrmFeatureModule = TypeOrmModule.forFeature([
-  OrgRepository,
-  AccountRepository,
-  OrgRootRepository,
-  AccountAuthorizationRepository,
-  AuthenticationRepository,
-  LoginLogRepository,
-  OAuthClientPublicKeyRepository
-]);
+  constructor() {
+    this._loaders.push(new AWSSecretsManagerConfigLoader());
+  }
+
+  public load(): Promise<boolean> {
+    if (this._loading) {
+      return this._loadSignal.wait();
+    }
+    this._loading = true;
+    return this._loaders.reduce(
+      (prev, cur) => prev.then((loaded) => {
+        if (loaded) return loaded;
+        return cur.probe()
+          .then((available) => {
+            if (available) {
+              return cur.read()
+                .then((envs) => {
+                  Object.assign(this._envs, envs);
+                  return true;
+                });
+            }
+            return false;
+          });
+      }), Promise.resolve(false)
+    )
+      .then((r) => {
+        this._loadSignal.signal(r);
+        return r;
+      });
+  }
+
+  public get(key: string): string | undefined {
+    return this._envs[key] || process.env[key];
+  }
+
+  public get PRIVATE_KEY_FILE(): string {
+    return this.get('PRIVATE_KEY_FILE') || '/secret-keys/private.key.json';
+  }
+  public get PRIVATE_KEY_DATA(): string {
+    return this.get('PRIVATE_KEY_DATA');
+  }
+  public get PUBLIC_KEYS_FILE(): string {
+    return this.get('PUBLIC_KEYS_FILE') || '/secret-keys/public.keys.json';
+  }
+  public get PUBLIC_KEYS_DATA(): string {
+    return this.get('PUBLIC_KEYS_DATA');
+  }
+  public get ENCRYPTION_KEY_FILE(): string {
+    return this.get('ENCRYPTION_KEY_FILE') || '/secret-keys/enc.key.json';
+  }
+  public get ENCRYPTION_KEY_DATA(): string {
+    return this.get('ENCRYPTION_KEY_DATA');
+  }
+  public get HTTP_PORT(): number {
+    return parseInt(this.get('HTTP_PORT') || '0');
+  }
+  public get DB_HOST(): string {
+    return this.get('DB_HOST');
+  }
+  public get DB_PORT(): number {
+    return parseInt(this.get('DB_PORT') || '3306');
+  }
+  public get DB_USERNAME(): string {
+    return this.get('DB_USERNAME');
+  }
+  public get DB_PASSWORD(): string {
+    return this.get('DB_PASSWORD');
+  }
+  public get DB_NAME(): string {
+    return this.get('DB_NAME');
+  }
+  public get FRONT_PROXY_URL(): string {
+    return this.get('FRONT_PROXY_URL');
+  }
+
+  public getPrivateKey(): Promise<string> {
+    if (this.PRIVATE_KEY_DATA) {
+      return Promise.resolve(this.PRIVATE_KEY_DATA);
+    }
+    return util.promisify(fs.readFile)(this.PRIVATE_KEY_FILE, { encoding: 'utf-8' });
+  }
+
+  public getPublicKeys(): Promise<string> {
+    if (this.PUBLIC_KEYS_DATA) {
+      return Promise.resolve(this.PUBLIC_KEYS_DATA);
+    }
+    return util.promisify(fs.readFile)(this.PUBLIC_KEYS_FILE, { encoding: 'utf-8' });
+  }
+
+  public getEncryptionKey(): Promise<any> {
+    return (this.ENCRYPTION_KEY_DATA ? Promise.resolve(this.ENCRYPTION_KEY_DATA) : util.promisify(fs.readFile)(this.ENCRYPTION_KEY_FILE, { encoding: 'utf-8' }))
+      .then(data => JSON.parse(data));
+  }
+}
+
+const instance = new ConfigManager();
+export default instance;

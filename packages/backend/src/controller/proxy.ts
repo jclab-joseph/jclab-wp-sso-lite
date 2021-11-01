@@ -1,6 +1,6 @@
 import {All, Controller, Get, Logger, Next, Post, Req, Res} from '@nestjs/common';
 import {createProxyMiddleware, RequestHandler} from 'http-proxy-middleware';
-import {FRONT_PROXY_URL} from '../envs';
+import ConfigManager from '../config';
 
 @Controller()
 export class ProxyController {
@@ -9,9 +9,9 @@ export class ProxyController {
 
   constructor() {
     this.log = new Logger(ProxyController.name);
-    if (FRONT_PROXY_URL) {
+    if (ConfigManager.FRONT_PROXY_URL) {
       this._proxy = createProxyMiddleware({
-        target: FRONT_PROXY_URL,
+        target: ConfigManager.FRONT_PROXY_URL,
         secure: false
       });
     }

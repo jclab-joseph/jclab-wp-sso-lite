@@ -1,5 +1,5 @@
 import {MiddlewareConsumer, Module, NestModule} from '@nestjs/common';
-import {OrmFeatureModule, OrmRootModule} from './config';
+import {OrmRootConfig, OrmFeatureModule} from './typeorm.modules';
 import {KeysController} from './controller/keys';
 import {OauthController} from './controller/oauth';
 import {LoggerMiddleware} from './logger.middleware';
@@ -9,7 +9,7 @@ import {AuthorizationCodeService} from './service/authorization_code';
 import {ProxyController} from './controller/proxy';
 
 @Module({
-  imports: [OrmRootModule, OrmFeatureModule],
+  imports: [OrmRootConfig(), OrmFeatureModule],
   providers: [AuthorizationCodeService, UserAuthService, ClientAuthService],
   controllers: [KeysController, OauthController, ProxyController]
 })

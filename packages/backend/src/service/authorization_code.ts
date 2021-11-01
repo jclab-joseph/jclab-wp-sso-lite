@@ -10,7 +10,7 @@ import {
   FlattenedJWE,
   JWEHeaderParameters
 } from 'jose'
-import {getEncryptionKey} from '../envs';
+import ConfigManager from '../config';
 import {LoginResult} from './user_auth';
 
 const encoder = new util.TextEncoder();
@@ -27,7 +27,7 @@ export interface AuthorizationCodeData {
 }
 
 const keySupplier: CompactDecryptGetKey = (protectedHeader: JWEHeaderParameters, token: FlattenedJWE): Promise<KeyLike | Uint8Array> => {
-  return getEncryptionKey()
+  return ConfigManager.getEncryptionKey()
     .then((encryptionKeyJson) => importJWK({
       alg: 'dir',
       ...encryptionKeyJson
@@ -52,7 +52,7 @@ export class AuthorizationCodeService {
       time: new Date().getTime(),
       clientId: clientId
     };
-    return getEncryptionKey()
+    return ConfigManager.getEncryptionKey()
       .then((encryptionKeyJson) => {
         return importJWK({
           alg: 'dir',

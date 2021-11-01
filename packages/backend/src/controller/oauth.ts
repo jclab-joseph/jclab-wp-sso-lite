@@ -15,14 +15,13 @@ import { TextEncoder } from 'util';
 import * as url from 'url';
 import * as uuid from 'uuid';
 import {
+  Request,
   Response
 } from 'express';
 import {
   CompactSign, importJWK, JWK
 } from 'jose';
-import {
-  getPrivateKey
-} from '../envs';
+import ConfigManager from '../config';
 import {
   UserAuthService, LoginResult, RemoteInfo
 } from '../service/user_auth';
@@ -210,7 +209,7 @@ export class OauthController {
   }
 
   private signToken(data: AccessTokenData): Promise<string> {
-    return getPrivateKey()
+    return ConfigManager.getPrivateKey()
       .then((text) => JSON.parse(text))
       .then((jwk) => importJWK(jwk as JWK)
         .then((privateKey) => {

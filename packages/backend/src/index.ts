@@ -1,11 +1,13 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import {INestApplication, Logger} from '@nestjs/common';
-import serverlessExpress from '@vendia/serverless-express';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { AppModule } from './app.module';
+import express from 'express';
+import serverlessExpress from '@vendia/serverless-express';
 import WaitSignal from 'wait-signal';
-import { HTTP_PORT } from './envs';
+import ConfigManager from './config';
 
 const applicationSignal: WaitSignal<INestApplication> = new WaitSignal();
 
@@ -13,12 +15,14 @@ const logger = new Logger('Application');
 
 async function initialize() {
   try {
-    const app = await NestFactory.create(AppModule);
+    await ConfigManager.load();
+    const expressApp = express();
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
     await app.init();
-    if (HTTP_PORT) {
-      app.listen(HTTP_PORT)
+    if (ConfigManager.HTTP_PORT) {
+      app.listen(ConfigManager.HTTP_PORT)
         .then(() => {
-          logger.log(`Listen ${HTTP_PORT}`);
+          logger.log(`Listen ${ConfigManager.HTTP_PORT}`);
         })
         .catch((err) => {
           logger.error('Error', err);

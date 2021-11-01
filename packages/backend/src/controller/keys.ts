@@ -1,5 +1,5 @@
 import {Controller, Get, Header} from '@nestjs/common';
-import {getPublicKeys} from '../envs';
+import ConfigManager from '../config';
 
 @Controller()
 export class KeysController {
@@ -10,6 +10,6 @@ export class KeysController {
   @Get('/api/jwks.json')
   @Header('Content-Type', 'application/json; charset=utf-8')
   getJwksJson(): Promise<string> {
-    return getPublicKeys();
+    return ConfigManager.getPublicKeys();
   }
 }
