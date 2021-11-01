@@ -1,13 +1,15 @@
 import util from 'util';
 import fs from 'fs';
 import WaitSignal from 'wait-signal';
-import {ConfigLoader} from './config_loaders/loader';
+import {ConfigProvider} from './config_loaders/provider';
 import {AWSSecretsManagerConfigLoader} from './config_loaders/aws_sm';
+import {Logger} from '@nestjs/common';
 
 export class ConfigManager {
+  private log: Logger = new Logger(ConfigManager.name);
   private _loading: boolean = false;
   private _loadSignal: WaitSignal<boolean> = new WaitSignal();
-  private _loaders: ConfigLoader[] = [];
+  private _loaders: ConfigProvider[] = [];
   private _envs: Record<string, string> = {};
 
   constructor() {
@@ -19,14 +21,17 @@ export class ConfigManager {
       return this._loadSignal.wait();
     }
     this._loading = true;
+    this.log.log('Start config manager loading...');
     return this._loaders.reduce(
       (prev, cur) => prev.then((loaded) => {
         if (loaded) return loaded;
         return cur.probe()
           .then((available) => {
+            this.log.log(`provider[${cur.name}] available=${available}`);
             if (available) {
               return cur.read()
                 .then((envs) => {
+                  this.log.log(`provider[${cur.name}] loaded: ${Object.keys(envs).join(',')}`);
                   Object.assign(this._envs, envs);
                   return true;
                 });
@@ -36,8 +41,14 @@ export class ConfigManager {
       }), Promise.resolve(false)
     )
       .then((r) => {
+        this.log.log('config loading done');
         this._loadSignal.signal(r);
         return r;
+      })
+      .catch((err) => {
+        this.log.log(`config loading failed: ${err}`);
+        this._loadSignal.throw(err);
+        return Promise.reject(err);
       });
   }
 

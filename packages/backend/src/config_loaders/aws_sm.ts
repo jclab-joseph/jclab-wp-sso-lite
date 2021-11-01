@@ -1,16 +1,20 @@
 import AWS from 'aws-sdk';
-import {ConfigLoader} from './loader';
+import {ConfigProvider} from './provider';
 
 const region = process.env.AWS_SECRETS_MANAGER_REGION || process.env.AWS_REGION;
 const secretName = process.env.AWS_SECRETS_SECRET_MANAGER_NAME;
 
-export class AWSSecretsManagerConfigLoader implements ConfigLoader {
+export class AWSSecretsManagerConfigLoader implements ConfigProvider {
   private _client: AWS.SecretsManager;
 
   constructor() {
     this._client = new AWS.SecretsManager({
       region: region
     });
+  }
+
+  get name(): string {
+    return 'AWSSecretsManagerConfigLoader';
   }
 
   probe(): Promise<boolean> {
