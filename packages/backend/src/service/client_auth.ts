@@ -23,7 +23,9 @@ export class ClientAuthService {
   }
 
   public findClientName(clientId: string): Promise<string | undefined> {
-    return this.oauthClientPublicKeyRepository.findOne(clientId)
+    return this.oauthClientPublicKeyRepository.findOne({
+      clientId: clientId
+    })
       .then((row) => {
         return row && row.name;
       });
