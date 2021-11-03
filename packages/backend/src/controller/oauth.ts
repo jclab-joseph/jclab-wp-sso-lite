@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { TextEncoder } from 'util';
 import * as url from 'url';
+import * as querystring from 'querystring';
 import * as uuid from 'uuid';
 import {
   Request,
@@ -96,10 +97,7 @@ export class OauthController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    let p = req.url.indexOf('?');
-    if (p < 0) p = 0;
-    else p++;
-    res.redirect('/oauth/authorize?' + req.url.substr(p));
+    res.redirect('/oauth/authorize?' + querystring.stringify(req.query as any));
   }
 
   @Post('/authorize')
@@ -211,11 +209,12 @@ export class OauthController {
   private signToken(data: AccessTokenData): Promise<string> {
     return ConfigManager.getPrivateKey()
       .then((text) => JSON.parse(text))
-      .then((jwk) => importJWK(jwk as JWK)
+      .then((jwk: JWK) => importJWK(jwk)
         .then((privateKey) => {
           return new CompactSign(encoder.encode(JSON.stringify(data)))
             .setProtectedHeader({
-              alg: jwk.alg
+              alg: jwk.alg,
+              kid: jwk.kid
             })
             .sign(privateKey);
         })
