@@ -51,8 +51,8 @@ import axios from 'axios';
 @Component({})
 export default class Login extends Vue {
   public clientName: string = '';
-  public username: string = 'test01';
-  public password: string = 'password';
+  public username: string = '';
+  public password: string = '';
 
   public errorMessage: string = '';
   public redirectUri: string = '';
